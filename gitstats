@@ -321,7 +321,7 @@ class GitDataCollector(DataCollector):
 				continue
 			prev = tag
 			for line in output.split(b'\n'):
-				parts = re.split(r'\s+', line.decode(), 2)
+				parts = re.split(r'\s+', line.decode('iso-8859-1'), 2)
 				commits = int(parts[1])
 				author = parts[2]
 				self.tags[tag]['commits'] += commits
