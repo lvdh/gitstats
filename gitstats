@@ -438,7 +438,6 @@ class GitDataCollector(DataCollector):
 		# outputs "<stamp> <files>" for each revision
 		revlines = getpipeoutput(['git rev-list --pretty=format:"%%at %%T" %s' % getlogrange('HEAD'), 'grep -v ^commit']).strip().split(b'\n')
 		revlines = {i.decode() if not isinstance(i, str) else i for i in revlines}
-		print(revlines)
 		lines = []
 		revs_to_read = []
 		time_rev_count = []
