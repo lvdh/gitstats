@@ -93,14 +93,14 @@ def getkeyssortedbyvaluekey(d, key):
 	return [el[1] for el in sorted([(d[el][key], el) for el in list(d.keys())])]
 
 def getstatsummarycounts(line):
-	numbers = re.findall(r'\d+', line)
+	numbers = re.findall(b'\d+', line)
 	if   len(numbers) == 1:
 		# neither insertions nor deletions: may probably only happen for "0 files changed"
 		numbers.append(0);
 		numbers.append(0);
-	elif len(numbers) == 2 and line.find('(+)') != -1:
+	elif len(numbers) == 2 and line.find(b'(+)') != -1:
 		numbers.append(0);    # only insertions were printed on line
-	elif len(numbers) == 2 and line.find('(-)') != -1:
+	elif len(numbers) == 2 and line.find(b'(-)') != -1:
 		numbers.insert(1, 0); # only deletions were printed on line
 	return numbers
 
@@ -110,21 +110,21 @@ def getversion():
 	if VERSION == 0:
 		gitstats_repo = os.path.dirname(os.path.abspath(__file__))
 		VERSION = getpipeoutput(["git --git-dir=%s/.git --work-tree=%s rev-parse --short %s" %
-			(gitstats_repo, gitstats_repo, getcommitrange('HEAD').split('\n')[0])])
+			(gitstats_repo, gitstats_repo, getcommitrange('HEAD').split(b'\n')[0])])
 	return VERSION
 
 def getgitversion():
-	return getpipeoutput(['git --version']).split('\n')[0]
+	return getpipeoutput(['git --version']).split(b'\n')[0]
 
 def getgnuplotversion():
-	return getpipeoutput(['%s --version' % gnuplot_cmd]).split('\n')[0]
+	return getpipeoutput(['%s --version' % gnuplot_cmd]).split(b'\n')[0]
 
 def getnumoffilesfromrev(time_rev):
 	"""
 	Get number of files changed in commit
 	"""
 	time, rev = time_rev
-	return (int(time), rev, int(getpipeoutput(['git ls-tree -r --name-only "%s"' % rev, 'wc -l']).split('\n')[0]))
+	return (int(time), rev, int(getpipeoutput(['git ls-tree -r --name-only "%s"' % rev, 'wc -l']).split(b'\n')[0]))
 
 def getnumoflinesinblob(ext_blob):
 	"""
@@ -290,16 +290,16 @@ class GitDataCollector(DataCollector):
 		#self.total_lines = int(getoutput('git-ls-files -z |xargs -0 cat |wc -l'))
 
 		# tags
-		lines = getpipeoutput(['git show-ref --tags']).split('\n')
+		lines = getpipeoutput(['git show-ref --tags']).split(b'\n')
 		for line in lines:
 			if len(line) == 0:
 				continue
-			(hash, tag) = line.split(' ')
+			(hash, tag) = line.split(b' ')
 
 			tag = tag.replace('refs/tags/', '')
 			output = getpipeoutput(['git log "%s" --pretty=format:"%%at %%aN" -n 1' % hash])
 			if len(output) > 0:
-				parts = output.split(' ')
+				parts = output.split(b' ')
 				stamp = 0
 				try:
 					stamp = int(parts[0])
@@ -318,7 +318,7 @@ class GitDataCollector(DataCollector):
 			if len(output) == 0:
 				continue
 			prev = tag
-			for line in output.split('\n'):
+			for line in output.split(b'\n'):
 				parts = re.split(r'\s+', line, 2)
 				commits = int(parts[1])
 				author = parts[2]
@@ -327,21 +327,21 @@ class GitDataCollector(DataCollector):
 
 		# Collect revision statistics
 		# Outputs "<stamp> <date> <time> <timezone> <author> '<' <mail> '>'"
-		lines = getpipeoutput(['git rev-list --pretty=format:"%%at %%ai %%aN <%%aE>" %s' % getlogrange('HEAD'), 'grep -v ^commit']).split('\n')
+		lines = getpipeoutput(['git rev-list --pretty=format:"%%at %%ai %%aN <%%aE>" %s' % getlogrange('HEAD'), 'grep -v ^commit']).split(b'\n')
 		for line in lines:
-			parts = line.split(' ', 4)
+			parts = line.split(b' ', 4)
 			author = ''
 			try:
 				stamp = int(parts[0])
 			except ValueError:
 				stamp = 0
 			timezone = parts[3]
-			author, mail = parts[4].split('<', 1)
+			author, mail = parts[4].split(b'<', 1)
 			author = author.rstrip()
-			mail = mail.rstrip('>')
+			mail = mail.rstrip(b'>')
 			domain = '?'
-			if mail.find('@') != -1:
-				domain = mail.rsplit('@', 1)[1]
+			if mail.find(b'@') != -1:
+				domain = mail.rsplit(b'@', 1)[1]
 			date = datetime.datetime.fromtimestamp(float(stamp))
 
 			# First and last commit stamp (may be in any order because of cherry-picking and patches)
@@ -434,14 +434,14 @@ class GitDataCollector(DataCollector):
 			self.commits_by_timezone[timezone] = self.commits_by_timezone.get(timezone, 0) + 1
 
 		# outputs "<stamp> <files>" for each revision
-		revlines = getpipeoutput(['git rev-list --pretty=format:"%%at %%T" %s' % getlogrange('HEAD'), 'grep -v ^commit']).strip().split('\n')
+		revlines = getpipeoutput(['git rev-list --pretty=format:"%%at %%T" %s' % getlogrange('HEAD'), 'grep -v ^commit']).strip().split(b'\n')
 		lines = []
 		revs_to_read = []
 		time_rev_count = []
 		#Look up rev in cache and take info from cache if found
 		#If not append rev to list of rev to read from repo
 		for revline in revlines:
-			time, rev = revline.split(' ')
+			time, rev = revline.split(b' ')
 			#if cache empty then add time and rev to list of new rev's
 			#otherwise try to read needed info from cache
 			if 'files_in_tree' not in list(self.cache.keys()):
@@ -477,12 +477,12 @@ class GitDataCollector(DataCollector):
 				print('Warning: failed to parse line "%s"' % line)
 
 		# extensions and size of files
-		lines = getpipeoutput(['git ls-tree -r -l -z %s' % getcommitrange('HEAD', end_only = True)]).split('\000')
+		lines = getpipeoutput(['git ls-tree -r -l -z %s' % getcommitrange('HEAD', end_only = True)]).split(b'\000')
 		blobs_to_read = []
 		for line in lines:
 			if len(line) == 0:
 				continue
-			parts = re.split(r'\s+', line, 4)
+			parts = re.split(b'\s+', line, 4)
 			if parts[0] == '160000' and parts[3] == '-':
 				# skip submodules
 				continue
@@ -493,11 +493,11 @@ class GitDataCollector(DataCollector):
 			self.total_size += size
 			self.total_files += 1
 
-			filename = fullpath.split('/')[-1] # strip directories
-			if filename.find('.') == -1 or filename.rfind('.') == 0:
+			filename = fullpath.split(b'/')[-1] # strip directories
+			if filename.find(b'.') == -1 or filename.rfind(b'.') == 0:
 				ext = ''
 			else:
-				ext = filename[(filename.rfind('.') + 1):]
+				ext = filename[(filename.rfind(b'.') + 1):]
 			if len(ext) > conf['max_ext_length']:
 				ext = ''
 			if ext not in self.extensions:
@@ -536,7 +536,7 @@ class GitDataCollector(DataCollector):
 		extra = ''
 		if conf['linear_linestats']:
 			extra = '--first-parent -m'
-		lines = getpipeoutput(['git log --shortstat %s --pretty=format:"%%at %%aN" %s' % (extra, getlogrange('HEAD'))]).split('\n')
+		lines = getpipeoutput(['git log --shortstat %s --pretty=format:"%%at %%aN" %s' % (extra, getlogrange('HEAD'))]).split(b'\n')
 		lines.reverse()
 		files = 0; inserted = 0; deleted = 0; total_lines = 0
 		author = None
@@ -545,8 +545,8 @@ class GitDataCollector(DataCollector):
 				continue
 
 			# <stamp> <author>
-			if re.search('files? changed', line) == None:
-				pos = line.find(' ')
+			if re.search(b'files? changed', line) == None:
+				pos = line.find(b' ')
 				if pos != -1:
 					try:
 						(stamp, author) = (int(line[:pos]), line[pos+1:])
@@ -590,7 +590,7 @@ class GitDataCollector(DataCollector):
 		# Similar to the above, but never use --first-parent
 		# (we need to walk through every commit to know who
 		# committed what, not just through mainline)
-		lines = getpipeoutput(['git log --shortstat --date-order --pretty=format:"%%at %%aN" %s' % (getlogrange('HEAD'))]).split('\n')
+		lines = getpipeoutput(['git log --shortstat --date-order --pretty=format:"%%at %%aN" %s' % (getlogrange('HEAD'))]).split(b'\n')
 		lines.reverse()
 		files = 0; inserted = 0; deleted = 0
 		author = None
@@ -600,8 +600,8 @@ class GitDataCollector(DataCollector):
 				continue
 
 			# <stamp> <author>
-			if re.search('files? changed', line) == None:
-				pos = line.find(' ')
+			if re.search(b'files? changed', line) == None:
+				pos = line.find(b' ')
 				if pos != -1:
 					try:
 						oldstamp = stamp
@@ -688,7 +688,7 @@ class GitDataCollector(DataCollector):
 	
 	def getTags(self):
 		lines = getpipeoutput(['git show-ref --tags', 'cut -d/ -f3'])
-		return lines.split('\n')
+		return lines.split(b'\n')
 	
 	def getTagDate(self, tag):
 		return self.revToDate('tags/' + tag)
@@ -972,7 +972,7 @@ class HTMLReportCreator(ReportCreator):
 		allauthors = data.getAuthors()
 		if len(allauthors) > conf['max_authors']:
 			rest = allauthors[conf['max_authors']:]
-			f.write('<p class="moreauthors">These didn\'t make it to the top: %s</p>' % ', '.join(rest))
+			f.write('<p class="moreauthors">These didn\'t make it to the top: %s</p>' % ', '.join(str(rest)))
 
 		f.write(html_header(2, 'Cumulated Added Lines of Code per Author'))
 		f.write('<img src="lines_of_code_by_author.png" alt="Lines of code per Author">')
@@ -1025,7 +1025,7 @@ class HTMLReportCreator(ReportCreator):
 			authors = getkeyssortedbyvalues(authordict)
 			authors.reverse()
 			commits = data.author_of_month[yymm][authors[0]]
-			next = ', '.join(authors[1:conf['authors_top']+1])
+			next = ', '.join(str(authors[1:conf['authors_top']+1]))
 			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yymm, authors[0], commits, (100.0 * commits) / data.commits_by_month[yymm], data.commits_by_month[yymm], next, len(authors)))
 
 		f.write('</table>')
@@ -1037,7 +1037,7 @@ class HTMLReportCreator(ReportCreator):
 			authors = getkeyssortedbyvalues(authordict)
 			authors.reverse()
 			commits = data.author_of_year[yy][authors[0]]
-			next = ', '.join(authors[1:conf['authors_top']+1])
+			next = ', '.join(str(authors[1:conf['authors_top']+1]))
 			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yy, authors[0], commits, (100.0 * commits) / data.commits_by_year[yy], data.commits_by_year[yy], next, len(authors)))
 		f.write('</table>')
 
@@ -1102,6 +1102,9 @@ class HTMLReportCreator(ReportCreator):
 		# Files :: Extensions
 		f.write(html_header(2, 'Extensions'))
 		f.write('<table class="sortable" id="ext"><tr><th>Extension</th><th>Files (%)</th><th>Lines (%)</th><th>Lines/file</th></tr>')
+        # WORKAROUND: data.extensions.keys() contains a mix of str and bytes, decode all items
+		data.extensions = {k.decode() if not isinstance(k, str) else k:v for k,v in data.extensions.items()}
+        # // WORKAROUND
 		for ext in sorted(data.extensions.keys()):
 			files = data.extensions[ext]['files']
 			lines = data.extensions[ext]['lines']
@@ -1329,7 +1332,7 @@ plot """
 		plots = []
 		for a in self.authors_to_plot:
 			i = i + 1
-			author = a.replace("\"", "\\\"").replace("`", "")
+			author = a.replace(b"\"", b"\\\"").replace(b"`", b"")
 			plots.append("""'lines_of_code_by_author.dat' using 1:%d title "%s" w lines""" % (i, author))
 		f.write(", ".join(plots))
 		f.write('\n')
@@ -1358,7 +1361,7 @@ plot """
 		plots = []
 		for a in self.authors_to_plot:
 			i = i + 1
-			author = a.replace("\"", "\\\"").replace("`", "")
+			author = a.replace(b"\"", b"\\\"").replace(b"`", b"")
 			plots.append("""'commits_by_author.dat' using 1:%d title "%s" w lines""" % (i, author))
 		f.write(", ".join(plots))
 		f.write('\n')
@@ -1419,7 +1422,7 @@ class GitStats:
 		optlist, args = getopt.getopt(args_orig, 'hc:', ["help"])
 		for o,v in optlist:
 			if o == '-c':
-				key, value = v.split('=', 1)
+				key, value = v.split(b'=', 1)
 				if key not in conf:
 					raise KeyError('no such key "%s" in config' % key)
 				if isinstance(conf[key], int):
