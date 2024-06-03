@@ -93,7 +93,7 @@ def getkeyssortedbyvaluekey(d, key):
 	return [el[1] for el in sorted([(d[el][key], el) for el in list(d.keys())])]
 
 def getstatsummarycounts(line):
-	numbers = re.findall(r'\d+', line.decode())
+	numbers = re.findall(r'\d+', line.decode('iso-8859-1', 'ignore'))
 	if   len(numbers) == 1:
 		# neither insertions nor deletions: may probably only happen for "0 files changed"
 		numbers.append(0);
@@ -114,10 +114,10 @@ def getversion():
 	return VERSION
 
 def getgitversion():
-	return getpipeoutput(['git --version']).split(b'\n')[0].decode()
+	return getpipeoutput(['git --version']).split(b'\n')[0].decode('iso-8859-1', 'ignore')
 
 def getgnuplotversion():
-	return getpipeoutput(['%s --version' % gnuplot_cmd]).split(b'\n')[0].decode()
+	return getpipeoutput(['%s --version' % gnuplot_cmd]).split(b'\n')[0].decode('iso-8859-1', 'ignore')
 
 def getnumoffilesfromrev(time_rev):
 	"""
@@ -295,10 +295,10 @@ class GitDataCollector(DataCollector):
 			if len(line) == 0:
 				continue
 			(hash, tag) = line.split(b' ')
-			hash = hash.decode()
+			hash = hash.decode('iso-8859-1', 'ignore')
 
 			tag = tag.replace(b'refs/tags/', b'')
-			tag = tag.decode()
+			tag = tag.decode('iso-8859-1', 'ignore')
 			output = getpipeoutput(['git log "%s" --pretty=format:"%%at %%aN" -n 1' % hash])
 			if len(output) > 0:
 				parts = output.split(b' ')
@@ -321,7 +321,7 @@ class GitDataCollector(DataCollector):
 				continue
 			prev = tag
 			for line in output.split(b'\n'):
-				parts = re.split(r'\s+', line.decode('iso-8859-1'), 2)
+				parts = re.split(r'\s+', line.decode('iso-8859-1', 'ignore'), 2)
 				commits = int(parts[1])
 				author = parts[2]
 				self.tags[tag]['commits'] += commits
@@ -437,7 +437,7 @@ class GitDataCollector(DataCollector):
 
 		# outputs "<stamp> <files>" for each revision
 		revlines = getpipeoutput(['git rev-list --pretty=format:"%%at %%T" %s' % getlogrange('HEAD'), 'grep -v ^commit']).strip().split(b'\n')
-		revlines = {i.decode() if not isinstance(i, str) else i for i in revlines}
+		revlines = {i.decode('iso-8859-1', 'ignore') if not isinstance(i, str) else i for i in revlines}
 		lines = []
 		revs_to_read = []
 		time_rev_count = []
@@ -485,7 +485,7 @@ class GitDataCollector(DataCollector):
 		for line in lines:
 			if len(line) == 0:
 				continue
-			parts = re.split(r'\s+', line.decode(), 4)
+			parts = re.split(r'\s+', line.decode('iso-8859-1', 'ignore'), 4)
 			if parts[0] == '160000' and parts[3] == '-':
 				# skip submodules
 				continue
@@ -948,7 +948,7 @@ class HTMLReportCreator(ReportCreator):
 		for i in sorted(list(data.commits_by_timezone.keys()), key = lambda n : int(n)):
 			commits = data.commits_by_timezone[i]
 			r = 127 + int((float(commits) / max_commits_on_tz) * 128)
-			f.write('<tr><th>%s</th><td style="background-color: rgb(%d, 0, 0)">%d</td></tr>' % (i.decode(), r, commits))
+			f.write('<tr><th>%s</th><td style="background-color: rgb(%d, 0, 0)">%d</td></tr>' % (i.decode('iso-8859-1', 'ignore'), r, commits))
 		f.write('</table>')
 
 		f.write('</body></html>')
@@ -969,13 +969,13 @@ class HTMLReportCreator(ReportCreator):
 		f.write('<tr><th>Author</th><th>Commits (%)</th><th>+ lines</th><th>- lines</th><th>First commit</th><th>Last commit</th><th class="unsortable">Age</th><th>Active days</th><th># by commits</th></tr>')
 		for author in data.getAuthors(conf['max_authors']):
 			info = data.getAuthorInfo(author)
-			f.write('<tr><td>%s</td><td>%d (%.2f%%)</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td></tr>' % (author.decode(), info['commits'], info['commits_frac'], info['lines_added'], info['lines_removed'], info['date_first'], info['date_last'], info['timedelta'], len(info['active_days']), info['place_by_commits']))
+			f.write('<tr><td>%s</td><td>%d (%.2f%%)</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td></tr>' % (author.decode('iso-8859-1', 'ignore'), info['commits'], info['commits_frac'], info['lines_added'], info['lines_removed'], info['date_first'], info['date_last'], info['timedelta'], len(info['active_days']), info['place_by_commits']))
 		f.write('</table>')
 
 		allauthors = data.getAuthors()
 		if len(allauthors) > conf['max_authors']:
 			rest = allauthors[conf['max_authors']:]
-			rest = {i.decode() if not isinstance(i, str) else i for i in rest}
+			rest = {i.decode('iso-8859-1', 'ignore') if not isinstance(i, str) else i for i in rest}
 			f.write('<p class="moreauthors">These didn\'t make it to the top: %s</p>' % ', '.join(rest))
 
 		f.write(html_header(2, 'Cumulated Added Lines of Code per Author'))
@@ -1029,7 +1029,7 @@ class HTMLReportCreator(ReportCreator):
 			authors = getkeyssortedbyvalues(authordict)
 			authors.reverse()
 			commits = data.author_of_month[yymm][authors[0]]
-			authors = [i.decode() if not isinstance(i, str) else i for i in authors]
+			authors = [i.decode('iso-8859-1', 'ignore') if not isinstance(i, str) else i for i in authors]
 			next = ', '.join(authors[1:conf['authors_top']+1])
 			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yymm, authors[0], commits, (100.0 * commits) / data.commits_by_month[yymm], data.commits_by_month[yymm], next, len(authors)))
 
@@ -1042,7 +1042,7 @@ class HTMLReportCreator(ReportCreator):
 			authors = getkeyssortedbyvalues(authordict)
 			authors.reverse()
 			commits = data.author_of_year[yy][authors[0]]
-			authors = [i.decode() if not isinstance(i, str) else i for i in authors]
+			authors = [i.decode('iso-8859-1', 'ignore') if not isinstance(i, str) else i for i in authors]
 			next = ', '.join(authors[1:conf['authors_top']+1])
 			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yy, authors[0], commits, (100.0 * commits) / data.commits_by_year[yy], data.commits_by_year[yy], next, len(authors)))
 		f.write('</table>')
@@ -1061,8 +1061,8 @@ class HTMLReportCreator(ReportCreator):
 			commits = 0
 			n += 1
 			info = data.getDomainInfo(domain)
-			fp.write('%s %d %d\n' % (domain.decode(), n , info['commits']))
-			f.write('<tr><th>%s</th><td>%d (%.2f%%)</td></tr>' % (domain.decode(), info['commits'], (100.0 * info['commits'] / totalcommits)))
+			fp.write('%s %d %d\n' % (domain.decode('iso-8859-1', 'ignore'), n , info['commits']))
+			f.write('<tr><th>%s</th><td>%d (%.2f%%)</td></tr>' % (domain.decode('iso-8859-1', 'ignore'), info['commits'], (100.0 * info['commits'] / totalcommits)))
 		f.write('</table></div>')
 		f.write('<img src="domains.png" alt="Commits by Domains">')
 		fp.close()
@@ -1109,7 +1109,7 @@ class HTMLReportCreator(ReportCreator):
 		f.write(html_header(2, 'Extensions'))
 		f.write('<table class="sortable" id="ext"><tr><th>Extension</th><th>Files (%)</th><th>Lines (%)</th><th>Lines/file</th></tr>')
         # WORKAROUND: data.extensions.keys() contains a mix of str and bytes, decode all items
-		data.extensions = {k.decode() if not isinstance(k, str) else k:v for k,v in data.extensions.items()}
+		data.extensions = {k.decode('iso-8859-1', 'ignore') if not isinstance(k, str) else k:v for k,v in data.extensions.items()}
         # // WORKAROUND
 		for ext in sorted(data.extensions.keys()):
 			files = data.extensions[ext]['files']
@@ -1339,7 +1339,7 @@ plot """
 		for a in self.authors_to_plot:
 			i = i + 1
 			author = a.replace(b"\"", b"\\\"").replace(b"`", b"")
-			plots.append("""'lines_of_code_by_author.dat' using 1:%d title "%s" w lines""" % (i, author.decode()))
+			plots.append("""'lines_of_code_by_author.dat' using 1:%d title "%s" w lines""" % (i, author.decode('iso-8859-1', 'ignore')))
 		f.write(", ".join(plots))
 		f.write('\n')
 
@@ -1368,7 +1368,7 @@ plot """
 		for a in self.authors_to_plot:
 			i = i + 1
 			author = a.replace(b"\"", b"\\\"").replace(b"`", b"")
-			plots.append("""'commits_by_author.dat' using 1:%d title "%s" w lines""" % (i, author.decode()))
+			plots.append("""'commits_by_author.dat' using 1:%d title "%s" w lines""" % (i, author.decode('iso-8859-1', 'ignore')))
 		f.write(", ".join(plots))
 		f.write('\n')
 
