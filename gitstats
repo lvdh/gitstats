@@ -295,8 +295,10 @@ class GitDataCollector(DataCollector):
 			if len(line) == 0:
 				continue
 			(hash, tag) = line.split(b' ')
+			hash = hash.decode()
 
 			tag = tag.replace(b'refs/tags/', b'')
+			tag = tag.decode()
 			output = getpipeoutput(['git log "%s" --pretty=format:"%%at %%aN" -n 1' % hash])
 			if len(output) > 0:
 				parts = output.split(b' ')
@@ -319,7 +321,7 @@ class GitDataCollector(DataCollector):
 				continue
 			prev = tag
 			for line in output.split(b'\n'):
-				parts = re.split(r'\s+', line, 2)
+				parts = re.split(r'\s+', line.decode(), 2)
 				commits = int(parts[1])
 				author = parts[2]
 				self.tags[tag]['commits'] += commits
