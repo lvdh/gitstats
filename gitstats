@@ -437,13 +437,15 @@ class GitDataCollector(DataCollector):
 
 		# outputs "<stamp> <files>" for each revision
 		revlines = getpipeoutput(['git rev-list --pretty=format:"%%at %%T" %s' % getlogrange('HEAD'), 'grep -v ^commit']).strip().split(b'\n')
+		revlines = {i.decode() if not isinstance(i, str) else i for i in revlines}
+		print(revlines)
 		lines = []
 		revs_to_read = []
 		time_rev_count = []
 		#Look up rev in cache and take info from cache if found
 		#If not append rev to list of rev to read from repo
 		for revline in revlines:
-			time, rev = revline.split(b' ')
+			time, rev = revline.split(' ')
 			#if cache empty then add time and rev to list of new rev's
 			#otherwise try to read needed info from cache
 			if 'files_in_tree' not in list(self.cache.keys()):
