@@ -114,10 +114,10 @@ def getversion():
 	return VERSION
 
 def getgitversion():
-	return getpipeoutput(['git --version']).split(b'\n')[0]
+	return getpipeoutput(['git --version']).split(b'\n')[0].decode()
 
 def getgnuplotversion():
-	return getpipeoutput(['%s --version' % gnuplot_cmd]).split(b'\n')[0]
+	return getpipeoutput(['%s --version' % gnuplot_cmd]).split(b'\n')[0].decode()
 
 def getnumoffilesfromrev(time_rev):
 	"""
@@ -945,7 +945,7 @@ class HTMLReportCreator(ReportCreator):
 		for i in sorted(list(data.commits_by_timezone.keys()), key = lambda n : int(n)):
 			commits = data.commits_by_timezone[i]
 			r = 127 + int((float(commits) / max_commits_on_tz) * 128)
-			f.write('<tr><th>%s</th><td style="background-color: rgb(%d, 0, 0)">%d</td></tr>' % (i, r, commits))
+			f.write('<tr><th>%s</th><td style="background-color: rgb(%d, 0, 0)">%d</td></tr>' % (i.decode(), r, commits))
 		f.write('</table>')
 
 		f.write('</body></html>')
@@ -966,7 +966,7 @@ class HTMLReportCreator(ReportCreator):
 		f.write('<tr><th>Author</th><th>Commits (%)</th><th>+ lines</th><th>- lines</th><th>First commit</th><th>Last commit</th><th class="unsortable">Age</th><th>Active days</th><th># by commits</th></tr>')
 		for author in data.getAuthors(conf['max_authors']):
 			info = data.getAuthorInfo(author)
-			f.write('<tr><td>%s</td><td>%d (%.2f%%)</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td></tr>' % (author, info['commits'], info['commits_frac'], info['lines_added'], info['lines_removed'], info['date_first'], info['date_last'], info['timedelta'], len(info['active_days']), info['place_by_commits']))
+			f.write('<tr><td>%s</td><td>%d (%.2f%%)</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td><td>%s</td><td>%d</td><td>%d</td></tr>' % (author.decode(), info['commits'], info['commits_frac'], info['lines_added'], info['lines_removed'], info['date_first'], info['date_last'], info['timedelta'], len(info['active_days']), info['place_by_commits']))
 		f.write('</table>')
 
 		allauthors = data.getAuthors()
@@ -1026,7 +1026,7 @@ class HTMLReportCreator(ReportCreator):
 			authors.reverse()
 			commits = data.author_of_month[yymm][authors[0]]
 			next = ', '.join(str(authors[1:conf['authors_top']+1]))
-			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yymm, authors[0], commits, (100.0 * commits) / data.commits_by_month[yymm], data.commits_by_month[yymm], next, len(authors)))
+			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yymm, authors[0].decode(), commits, (100.0 * commits) / data.commits_by_month[yymm], data.commits_by_month[yymm], next, len(authors)))
 
 		f.write('</table>')
 
@@ -1038,7 +1038,7 @@ class HTMLReportCreator(ReportCreator):
 			authors.reverse()
 			commits = data.author_of_year[yy][authors[0]]
 			next = ', '.join(str(authors[1:conf['authors_top']+1]))
-			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yy, authors[0], commits, (100.0 * commits) / data.commits_by_year[yy], data.commits_by_year[yy], next, len(authors)))
+			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yy, authors[0].decode(), commits, (100.0 * commits) / data.commits_by_year[yy], data.commits_by_year[yy], next, len(authors)))
 		f.write('</table>')
 
 		# Domains
@@ -1055,8 +1055,8 @@ class HTMLReportCreator(ReportCreator):
 			commits = 0
 			n += 1
 			info = data.getDomainInfo(domain)
-			fp.write('%s %d %d\n' % (domain, n , info['commits']))
-			f.write('<tr><th>%s</th><td>%d (%.2f%%)</td></tr>' % (domain, info['commits'], (100.0 * info['commits'] / totalcommits)))
+			fp.write('%s %d %d\n' % (domain.decode(), n , info['commits']))
+			f.write('<tr><th>%s</th><td>%d (%.2f%%)</td></tr>' % (domain.decode(), info['commits'], (100.0 * info['commits'] / totalcommits)))
 		f.write('</table></div>')
 		f.write('<img src="domains.png" alt="Commits by Domains">')
 		fp.close()
@@ -1333,7 +1333,7 @@ plot """
 		for a in self.authors_to_plot:
 			i = i + 1
 			author = a.replace(b"\"", b"\\\"").replace(b"`", b"")
-			plots.append("""'lines_of_code_by_author.dat' using 1:%d title "%s" w lines""" % (i, author))
+			plots.append("""'lines_of_code_by_author.dat' using 1:%d title "%s" w lines""" % (i, author.decode()))
 		f.write(", ".join(plots))
 		f.write('\n')
 
@@ -1362,7 +1362,7 @@ plot """
 		for a in self.authors_to_plot:
 			i = i + 1
 			author = a.replace(b"\"", b"\\\"").replace(b"`", b"")
-			plots.append("""'commits_by_author.dat' using 1:%d title "%s" w lines""" % (i, author))
+			plots.append("""'commits_by_author.dat' using 1:%d title "%s" w lines""" % (i, author.decode()))
 		f.write(", ".join(plots))
 		f.write('\n')
 
