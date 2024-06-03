@@ -1029,8 +1029,9 @@ class HTMLReportCreator(ReportCreator):
 			authors = getkeyssortedbyvalues(authordict)
 			authors.reverse()
 			commits = data.author_of_month[yymm][authors[0]]
-			next = ', '.join(str(authors[1:conf['authors_top']+1]))
-			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yymm, authors[0].decode(), commits, (100.0 * commits) / data.commits_by_month[yymm], data.commits_by_month[yymm], next, len(authors)))
+			authors = [i.decode() if not isinstance(i, str) else i for i in authors]
+			next = ', '.join(authors[1:conf['authors_top']+1])
+			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yymm, authors[0], commits, (100.0 * commits) / data.commits_by_month[yymm], data.commits_by_month[yymm], next, len(authors)))
 
 		f.write('</table>')
 
@@ -1041,8 +1042,9 @@ class HTMLReportCreator(ReportCreator):
 			authors = getkeyssortedbyvalues(authordict)
 			authors.reverse()
 			commits = data.author_of_year[yy][authors[0]]
-			next = ', '.join(str(authors[1:conf['authors_top']+1]))
-			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yy, authors[0].decode(), commits, (100.0 * commits) / data.commits_by_year[yy], data.commits_by_year[yy], next, len(authors)))
+			authors = [i.decode() if not isinstance(i, str) else i for i in authors]
+			next = ', '.join(authors[1:conf['authors_top']+1])
+			f.write('<tr><td>%s</td><td>%s</td><td>%d (%.2f%% of %d)</td><td>%s</td><td>%d</td></tr>' % (yy, authors[0], commits, (100.0 * commits) / data.commits_by_year[yy], data.commits_by_year[yy], next, len(authors)))
 		f.write('</table>')
 
 		# Domains
