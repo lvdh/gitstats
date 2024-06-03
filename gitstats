@@ -90,6 +90,11 @@ def getkeyssortedbyvalues(dict):
 
 # dict['author'] = { 'commits': 512 } - ...key(dict, 'commits')
 def getkeyssortedbyvaluekey(d, key):
+	# WORKAROUND: d.keys() contains a mix of str and bytes, decode all items to str
+	#  -> decode b'<author' keys (bytes) to '<author>' (string)
+	#  additionally, ignore errors, ie. authors with multi-byte symbols in their name
+	d = {k.decode('iso-8859-1', 'ignore') if not isinstance(k, str) else k:v for k,v in d.items()}
+	# // WORKAROUND
 	return [el[1] for el in sorted([(d[el][key], el) for el in list(d.keys())])]
 
 def getstatsummarycounts(line):
